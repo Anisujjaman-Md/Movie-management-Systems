@@ -20,8 +20,13 @@ class RatingSerializer(serializers.ModelSerializer):
         fields = ['id', 'movie', 'user', 'score', 'created_at', 'updated_at']
 
 
-
 class MovieReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovieReport
-        fields = ['movie', 'reason']
+        fields = ['id', 'movie', 'reason', 'details', 'status', 'reported_by', 'created_at']
+        read_only_fields = ['status', 'reported_by', 'created_at']
+
+class MovieReportAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MovieReport
+        fields = ['id', 'status']

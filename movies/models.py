@@ -40,10 +40,31 @@ class Rating(models.Model):
         self.movie.update_avg_rating()
 
 class MovieReport(models.Model):
-    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name='reports')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    reason = models.TextField()
+    movie = models.ForeignKey(Movie, on_delete=models.CASCADE, related_name="reports")
+    reported_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reports_submitted")
+    reason = models.CharField(max_length=255)
+    details = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=[("pending", "Pending"), ("approved", "Approved"), ("rejected", "Rejected")],
+        default="pending"
+    )
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reports_reviewed"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return f"Report for {self.movie.title} by {self.user.username}"
+    def approve(self, admin_user):
+        self.status = "approved"
+        self.reviewed_by = admin_user
+        self.save()
+
+    def reject(self, admin_user):
+        self.status = "rejected"
+        self.reviewed_by = admin_user
+        self.save()

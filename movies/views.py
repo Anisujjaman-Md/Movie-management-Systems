@@ -1,7 +1,7 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
-from .models import Movie, Rating
-from .serializers import MovieReportSerializer, MovieSerializer, RatingSerializer
+from .models import Movie, MovieReport, Rating
+from .serializers import MovieReportSerializer, MovieSerializer, RatingSerializer, MovieReportSerializer, MovieReportAdminSerializer
 from rest_framework.exceptions import PermissionDenied
 
 class MovieListView(generics.ListAPIView):
@@ -52,9 +52,52 @@ class RatingCreateUpdateView(generics.CreateAPIView, generics.UpdateAPIView):
             raise PermissionDenied("You can only modify your own ratings.")
         serializer.save()
 
-class MovieReportView(generics.CreateAPIView):
+
+class ReportMovieView(generics.CreateAPIView):
     serializer_class = MovieReportSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        movie_id = self.kwargs['movie_id']
+        movie = generics.get_object_or_404(Movie, id=movie_id)
+        serializer.save(reported_by=self.request.user, movie=movie)
+
+
+class ListReportsView(generics.ListAPIView):
+    queryset = MovieReport.objects.all()
+    serializer_class = MovieReportSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class UpdateReportStatusView(generics.UpdateAPIView):
+    queryset = MovieReport.objects.all()
+    serializer_class = MovieReportAdminSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def patch(self, request, *args, **kwargs):
+        report = self.get_object()
+        status_choice = request.data.get('status')
+
+        if status_choice not in ['approved', 'rejected']:
+            return Response({'error': 'Invalid status choice.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if status_choice == 'approved':
+            report.approve(admin_user=request.user)
+        elif status_choice == 'rejected':
+            report.reject(admin_user=request.user)
+
+        return Response({'message': f'Report {status_choice} successfully.'})
+
+    queryset = MovieReport.objects.all()
+    serializer_class = MovieReportSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, movie_id):
+        movie = generics.get_object_or_404(Movie, id=movie_id)
+        serializer = self.get_serializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save(reported_by=request.user, movie=movie)
+            return Response({"message": "Movie report submitted successfully.", "report": serializer.data}, status=status.HTTP_201_CREATED)
+        
+        return Response({"errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
