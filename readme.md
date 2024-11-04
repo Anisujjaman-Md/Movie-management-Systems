@@ -67,8 +67,8 @@ Once the application is running, you can access the following endpoints (adjust 
 - `PUT /api/movies/<id>/` - Update a specific movie (creator only)
 - `POST /api/movies/<id>/rate/` - Rate a movie
 - `POST /api/movies/<int:movie_id>/report/` - Report a movie
-- `POST /api/reports/` - Reported Movie List
-- `POST /api/reports/<int:pk>/status/` - Report a Status Update
+- `GET /api/reports/` - Reported Movie List
+- `PUT /api/reports/<int:pk>/status/` - Report a Status Update
 
 
 ## Admin Controls
