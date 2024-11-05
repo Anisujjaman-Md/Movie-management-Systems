@@ -1,6 +1,6 @@
 # Movie management Systems
 
-A brief description of your Django application goes here. Describe its purpose, features, and any other relevant details.
+A brief description of application goes here. Describe its purpose, features, and any other relevant details.
 
 ## Features
 
